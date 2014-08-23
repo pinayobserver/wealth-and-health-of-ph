@@ -1,1 +1,243 @@
-Hello World
+<!DOCTYPE html>
+<html>
+<style>
+.axis path, .axis line {
+  fill: none;
+  stroke: rgb(128,128,128);
+  shape-rendering: crispEdges;
+}
+.axis{
+	font-size:10pt;
+	font-family:sans-serif;
+	shape-rendering: crispEdges;
+}
+.tick{
+//	fill:none; 
+	stroke:#000;
+}
+circle{
+	stroke:black;
+	stroke-width:0.5px;
+}
+text.label{
+	font-size:11pt;
+	font-family:sans-serif;
+}
+.key{
+	float:right;
+}
+.key_line{
+	font-size:17px;
+	width:100%;
+	font-family:sans-serif;
+}
+.key_square{
+	height:10px;
+	width:10px;
+	outline:solid 1px black;
+	float:left;
+	margin: 6px 10px 0px 10px;
+	background-color: black;
+}
+#bubblechart{
+	float:left;
+}
+#blurb{
+	float:left;
+}
+</style>
+<head>
+	<meta charset="utf-8">
+	<script src="d3/d3.min.js"></script>
+	<script>
+	function draw(data){
+		"use strict";
+		// code goes here
+ 		//d3.select("#blurb").append("p").text("Select a region:");
+ 		
+ 		// define margins
+ 		var container_dimensions = {width: 900, height: 400},
+ 			margins = {top:20, right:20, bottom:60, left:60},
+ 			chart_dimensions = {
+ 				width: container_dimensions.width - margins.left - margins.right,
+ 				height: container_dimensions.height - margins.top - margins.bottom
+ 			};
+		
+		// define chart 
+		var chart = d3.select("#bubblechart")
+			.append("svg")
+			.attr("width", container_dimensions.width)
+			.attr("height", container_dimensions.height)
+		  .append("g")
+		    .attr("transform", "translate(" + margins.left +"," + margins.top +")")
+		    .attr("id","chart");
+		
+		// define scales
+		var xscale = d3.scale.linear()
+			.range([0,chart_dimensions.width])
+			.domain([5.e3,42000]);			
+		var yscale = d3.scale.linear()
+			.range([chart_dimensions.height,0])
+			.domain([48,74]);
+		var rscale = d3.scale.sqrt()
+			.range([0,10])
+			.domain([0,1.5e6])
+		var cscale = d3.scale.category20();
+		
+		var xaxis = d3.svg.axis().scale(xscale);
+		var yaxis = d3.svg.axis().scale(yscale).orient("left");
+		
+		chart.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + chart_dimensions.height +")")
+			.call(xaxis);
+			
+		chart.append("g")
+			.attr("class", "y axis")
+			.call(yaxis);
+			
+		d3.select(".y.axis")
+			.append("text")
+				.attr("text-anchor", "middle")
+				.text("Life Expectancy at Birth (years)")
+				.attr("transform", "translate(-"+(margins.left/2+5)+","+ chart_dimensions.height/2+") rotate(270,0,0)");
+	
+		d3.select(".x.axis")
+			.append("text")
+				.attr("text-anchor", "middle")
+				.text("Income per capita (NCR 1997 pesos)")
+				.attr("x", chart_dimensions.width/2)
+				.attr("y", margins.bottom/2+7);
+				
+		chart.append("g")
+			.selectAll("circle")
+			.data(data)
+			.enter()
+			.append("circle")
+				.attr("cx", function(d){ return xscale(d.income); })
+				.attr("cy", function(d){ return yscale(d.lifeExpectancy); })
+				.attr("r", function(d){ return rscale(d.population);})
+				.attr("fill", function(d){ return cscale(d.region);})
+				.style("opacity",0.8)
+				.sort(order)
+				.attr("class", "circle")
+				.attr("id", function(d){ return "circle_"+d.regionCode; });
+
+		// place labels 
+		chart.append("g")
+			.selectAll("text.label")
+			.data(data)
+			.enter()
+			.append("text")
+				.attr("text-anchor", "middle")
+				.text(function(d){ return d.name; })
+				.attr("x", function(d){ return xscale(d.income); })
+				.attr("y", function(d){ return yscale(d.lifeExpectancy); })
+				.attr("dy","0.35em")
+				.attr("class","label")
+				.attr("id", function(d){ return "label_"+d.regionCode; })			
+				.attr("visibility", "hidden");
+				
+		// define key items
+		var key_items = d3.select("#key")
+				.selectAll("div")
+				.data(data.filter(function(d){return d.ref === 1;}))
+				.enter()
+				.append("div")
+				  .attr("class", "key_line")
+				  .attr("id", function(d){ return d.regionCode; });
+			
+		key_items.append("div")
+			.attr("id", function(d){ return "key_square_" + d.regionCode})
+			.attr("class", "key_square")
+			.style("background-color", function(d){return cscale(d.region);});
+			
+		key_items.append("div")
+			.attr("class", "key_label")
+			.text(function(d){return d.region});
+						
+		// define interaction
+		// Add mouseover actions on transparent dot masks (more responsive)
+		var dot = chart.append("g").data(data)
+					.attr("class", "dots")
+					.selectAll(".dot.mask")
+					.data(data) 
+					.enter()
+					.append("circle")
+					.attr("class", "dot mask")
+					.style("opacity",0)
+					.attr("cx", function(d){ return xscale(d.income); })
+					.attr("cy", function(d){ return yscale(d.lifeExpectancy); })
+					.attr("r", function(d){ return rscale(d.population);})
+					//.attr("fill", function(d){ return cscale(d.region);})
+					.sort(order)
+					.on("mouseover", function(d){
+						d3.selectAll("text.label").filter(function(dd) { return dd.name == d.name; }) 
+						.transition()
+						.attr("visibility", "visible")
+						})
+					.on("mouseout", function(d){
+						d3.selectAll("text.label") //.filter(function(dd) { return dd.name == d.name; }) 
+						.transition()
+						.attr("visibility", "hidden")
+						});
+
+		d3.selectAll(".key_line")
+			.on("mouseover", function(d){
+				var id = d3.select(this).attr("id");
+				d3.selectAll("circle").filter(function(dd){ return dd.regionCode != id; })
+					.transition()
+					.attr("fill", "#000")
+					.style("opacity", 0.1);
+//				d3.selectAll("#circle_"+id)
+//					.transition()
+//					.style("opacity", 0.8);
+				d3.selectAll("#label_"+id)
+					.transition()
+					.attr("visibility", "visible")
+				})
+			.on("mouseout", function(d){
+				var id = d3.select(this).attr("id");
+				d3.selectAll("circle") //.filter(function(dd){ return dd.regionCode != id; })
+					.transition()
+					.attr("fill", function(d){ return cscale(d.region);})
+					.style("opacity", 0.8);
+				d3.selectAll("text.label")
+					.transition()
+					.attr("visibility", "hidden")
+					.remove();
+				// re-place labels 
+				chart.append("g")
+					.selectAll("text.label")
+					.data(data)
+					.enter()
+					.append("text")
+						.attr("text-anchor", "middle")
+						.text(function(d){ return d.name; })
+						.attr("x", function(d){ return xscale(d.income); })
+						.attr("y", function(d){ return yscale(d.lifeExpectancy); })
+						.attr("dy","0.35em")
+						.attr("class","label")
+						.attr("id", function(d){ return "label_"+d.regionCode; })			
+						.attr("visibility", "hidden");
+				})
+
+						
+	}
+ 
+ 	// Defines a sort order so that the smallest dots are drawn on top.
+	function radius(d) { return d.population; }
+	function order(a, b) {
+		return radius(b) - radius(a);
+	}
+
+	</script>
+</head>
+<body>
+	<div id="title"><h1>Wealth and Health of Philippine Provinces</h1></div>
+	<div id="bubblechart"></div>
+	<div id="key" margin="200px 0px 60px 0px"></div>
+	<script>
+		d3.json("data/provinces.json", draw);
+	</script>
+</html>
