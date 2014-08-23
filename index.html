@@ -49,6 +49,7 @@ text.label{
 <head>
 	<meta charset="utf-8">
 	<script src="d3/d3.min.js"></script>
+	<title>Wealth and Health of Philippine Provinces</title>
 	<script>
 	function draw(data){
 		"use strict";
@@ -237,6 +238,20 @@ text.label{
 	<div id="title"><h1>Wealth and Health of Philippine Provinces</h1></div>
 	<div id="bubblechart"></div>
 	<div id="key" margin="200px 0px 60px 0px"></div>
+	<div id="blurb">
+	<p>Data Sources: <a href="http://hdn.org.ph">Human Development Network</a> (HDN), 
+	<a href="http://www.census.gov.ph">National Statistics Office</a> (NSO)</p>
+	<p>version 0.1, rreyes, uploaded 08/24/2014</p>
+	<p>
+	This interactive chart shows how long Filipinos live and how much they earn in 78 provinces. Wealthier and healthier provinces live in the upper right region of the chart; poorer and sicker ones live in the lower left region. Population size is shown by the size of the bubbles.</p> 
+	<ul>
+	<li>Mouse over any bubble to show which province it represents. - Which provinces have the highest income? The highest life expectancy? The lowest?
+	<li>Mouse over the region names (on the right side) to highlight the provinces in the region.- How do the different regions fare as you go from Luzon, Visayas, to Mindanao?
+	</ul>
+	<p>This visualization is directly inspired by Hans Rosling's <a href="http://www.gapminder.org/world">Wealth & Health of Nations</a>.</p>
+	<p>The current version shows 2003 values for income and life expectancy and 2010 values for population. To-do: update chart to show more recent values for income and life expectancy; convert income to 2014 pesos; update visualization to show values over different years (add slider and animation button)</p>
+	<h3><a href="http://pinayobserver.github.io">Back to Homepage</a></h3>
+	</div>
 	<script>
 		d3.json("data/provinces.json", draw);
 	</script>
